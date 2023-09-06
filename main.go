@@ -71,6 +71,7 @@ func main() {
 	db := config.NewDB()
 	userRepo := repository.NewUserRepository(db)
 	userConsumer := service.NewUserConsumerService(userRepo)
+	msgService := service.NewMessageService(bot, userRepo)
 
 	// Listen routes
 	go routes(db)
@@ -109,6 +110,10 @@ func main() {
 
 				case "[method=\"DELETE.USER\"]":
 					err := userConsumer.Delete(e.Value)
+					exception.PanicIfError(err)
+
+				case "[method=\"POST.TELEGRAM\"]":
+					err := msgService.SendMessage(e.Value)
 					exception.PanicIfError(err)
 				}
 

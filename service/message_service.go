@@ -2,18 +2,19 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"net/http"
 
 	"github.com/dikyayodihamzah/connex-bot/exception"
-	"github.com/dikyayodihamzah/connex-bot/model/web"
+	"github.com/dikyayodihamzah/connex-bot/model/kafkamodel"
 	"github.com/dikyayodihamzah/connex-bot/repository"
 	"github.com/go-playground/validator/v10"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 type MessageService interface {
-	Broadcast(c context.Context, request web.MessageRequest) error
+	SendMessage(request []byte) error
 }
 
 type messageServiceImpl struct {
@@ -30,27 +31,37 @@ func NewMessageService(
 	}
 }
 
-func (service *messageServiceImpl) Broadcast(c context.Context, request web.MessageRequest) error {
-	validate := validator.New()
-	if err := validate.Struct(request); err != nil {
+func (service *messageServiceImpl) SendMessage(request []byte) error {
+	messageRequest := new(kafkamodel.TelegramMessageRequest)
+
+	if err := json.Unmarshal(request, messageRequest); err != nil {
+		log.Println("Error kafka send message consumer:", err.Error())
 		return err
 	}
 
-	if request.Message == "" {
+	validate := validator.New()
+	if err := validate.Struct(messageRequest); err != nil {
+		return err
+	}
+
+	if messageRequest.Message == "" {
 		return exception.NewError(http.StatusBadRequest, "Message parameter is missing")
 	}
 
-	telegramUsername := "TELEGRAM_BOT_ID"
+	var userChatIDs []int64
+	for _, username := range messageRequest.Usernames {
+		ctx := context.Background()
 
-	user, err := service.UserRepository.FindOne(c, "telegram_user", telegramUsername)
-	if err != nil {
-		return err
+		user, _ := service.UserRepository.FindOne(ctx, "telegram_user", username)
+		userChatIDs = append(userChatIDs, user.TelegramChatId)
 	}
 
-	message := tgbotapi.NewMessage(user.TelegramChatId, request.Message)
-	if _, err := service.Bot.Send(message); err != nil {
-		log.Println(err)
-		return exception.NewError(http.StatusInternalServerError, "Failed to send message")
+	for _, chatID := range userChatIDs {
+		message := tgbotapi.NewMessage(chatID, messageRequest.Message)
+		if _, err := service.Bot.Send(message); err != nil {
+			log.Println(err)
+			return exception.NewError(http.StatusInternalServerError, "Failed to send message")
+		}
 	}
 
 	return nil

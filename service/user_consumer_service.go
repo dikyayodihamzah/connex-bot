@@ -30,7 +30,7 @@ func (service *userConsumerServiceImpl) Create(message []byte) error {
 	userMsg := new(kafkamodel.User)
 
 	if err := json.Unmarshal(message, userMsg); err != nil {
-		log.Println("error kafka insert user consumer:", err.Error())
+		log.Println("Error kafka insert user consumer:", err.Error())
 		return err
 	}
 
@@ -55,7 +55,7 @@ func (service *userConsumerServiceImpl) Create(message []byte) error {
 
 	ctx := context.Background()
 	if err := service.UserRepository.Create(ctx, user); err != nil {
-		log.Println("error kafka insert user consumer:", err.Error())
+		log.Println("Error kafka insert user consumer:", err.Error())
 		return err
 	}
 
@@ -66,7 +66,7 @@ func (service *userConsumerServiceImpl) Update(message []byte) error {
 	userMsg := new(kafkamodel.User)
 
 	if err := json.Unmarshal(message, userMsg); err != nil {
-		log.Println("error kafka insert user consumer:", err.Error())
+		log.Println("Error kafka insert user consumer:", err.Error())
 		return err
 	}
 
@@ -91,7 +91,7 @@ func (service *userConsumerServiceImpl) Update(message []byte) error {
 
 	ctx := context.Background()
 	if err := service.UserRepository.Update(ctx, user.Id, user); err != nil {
-		log.Println("error kafka insert user consumer:", err.Error())
+		log.Println("Error kafka insert user consumer:", err.Error())
 		return err
 	}
 
@@ -102,13 +102,13 @@ func (service *userConsumerServiceImpl) Delete(message []byte) error {
 	userMsg := new(kafkamodel.User)
 
 	if err := json.Unmarshal(message, userMsg); err != nil {
-		log.Println("error kafka insert user consumer:", err.Error())
+		log.Println("Error kafka insert user consumer:", err.Error())
 		return err
 	}
 
 	ctx := context.Background()
 	if err := service.UserRepository.Delete(ctx, userMsg.Id); err != nil {
-		log.Println("error kafka insert user consumer:", err.Error())
+		log.Println("Error kafka insert user consumer:", err.Error())
 		return err
 	}
 
