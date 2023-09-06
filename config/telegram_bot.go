@@ -7,7 +7,6 @@ import (
 )
 
 var (
-	// botID    = os.Getenv("TELEGRAM_BOT_ID")
 	botToken = os.Getenv("TELEGRAM_BOT_TOKEN")
 )
 

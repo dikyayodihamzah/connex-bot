@@ -19,8 +19,11 @@ func ErrorHandler(ctx *fiber.Ctx, err error) error {
 		Code:    code,
 		Status:  false,
 		Message: err.Error(),
-		Data:    err,
 	}
 
 	return ctx.Status(code).JSON(response)
+}
+
+func NewError(code int, message string) *fiber.Error {
+	return fiber.NewError(code, message)
 }
