@@ -18,16 +18,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func routes(db *mongo.Database) {
+func routes(db *mongo.Database, bot *tgbotapi.BotAPI, userRepo repository.UserRepository, msgService service.MessageService) {
 	app := fiber.New()
 	server := config.NewServerConfig()
 
-	bot := config.NewBot()
-
-	userRepo := repository.NewUserRepository(db)
 	userService := service.NewUserService(userRepo)
-	msgService := service.NewMessageService(bot, userRepo)
-
+	
 	controller := controller.NewMessageController(msgService)
 	controller.NewRouter(app)
 
@@ -69,12 +65,14 @@ func main() {
 	}
 
 	db := config.NewDB()
+	bot := config.NewBot()
+
 	userRepo := repository.NewUserRepository(db)
 	userConsumer := service.NewUserConsumerService(userRepo)
 	msgService := service.NewMessageService(bot, userRepo)
 
 	// Listen routes
-	go routes(db)
+	go routes(db, bot, userRepo, msgService)
 
 	run := true
 	for run {
