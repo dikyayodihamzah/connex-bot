@@ -61,7 +61,6 @@ func (service *messageServiceImpl) SendMessage(request []byte) error {
 	for _, chatID := range userChatIDs {
 		message := tgbotapi.NewMessage(chatID, messageRequest.Message)
 		if _, err := service.Bot.Send(message); err != nil {
-			log.Println(err)
 			return exception.NewError(http.StatusInternalServerError, "Failed to send message")
 		}
 	}
