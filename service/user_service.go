@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log"
 
 	"github.com/dikyayodihamzah/connex-bot/repository"
 )
@@ -30,6 +31,7 @@ func (service *userServiceImpl) AddTelegramChatID(chatID int64, username string)
 
 	user.TelegramChatId = chatID
 
+	log.Println(user.Id)
 	if err := service.UserRepository.Update(ctx, user.Id, user); err != nil {
 		return err
 	}

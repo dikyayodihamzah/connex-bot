@@ -18,22 +18,28 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func routes(db *mongo.Database, bot *tgbotapi.BotAPI, userRepo repository.UserRepository, msgService service.MessageService) {
+func routes(db *mongo.Database, msgService service.MessageService) {
 	app := fiber.New()
 	server := config.NewServerConfig()
 
-	userService := service.NewUserService(userRepo)
-	
 	controller := controller.NewMessageController(msgService)
 	controller.NewRouter(app)
 
+	err := app.Listen(server.URI)
+	log.Fatal(err)
+}
+
+func listenMessage(bot *tgbotapi.BotAPI, userService service.UserService) {
+	
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
 	updates := bot.GetUpdatesChan(u)
-
+	
 	for update := range updates {
-		if update.Message != nil && update.Message.IsCommand() {
+		if update.Message != nil {
+			log.Printf("Message from [%s] %s", update.Message.From.UserName, update.Message.Text)
+			
 			switch update.Message.Command() {
 			case "start":
 				err := userService.AddTelegramChatID(update.Message.Chat.ID, update.Message.From.UserName)
@@ -45,13 +51,8 @@ func routes(db *mongo.Database, bot *tgbotapi.BotAPI, userRepo repository.UserRe
 			default:
 				continue
 			}
-
-			log.Printf("Message from [%s] %s", update.Message.From.UserName, update.Message.Text)
 		}
 	}
-
-	err := app.Listen(server.URI)
-	log.Fatal(err)
 }
 
 func main() {
@@ -68,11 +69,15 @@ func main() {
 	bot := config.NewBot()
 
 	userRepo := repository.NewUserRepository(db)
+	userService := service.NewUserService(userRepo)
 	userConsumer := service.NewUserConsumerService(userRepo)
 	msgService := service.NewMessageService(bot, userRepo)
 
 	// Listen routes
-	go routes(db, bot, userRepo, msgService)
+	go routes(db, msgService)
+
+	// Listen telegram
+	go listenMessage(bot, userService)
 
 	run := true
 	for run {

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"github.com/dikyayodihamzah/connex-bot/exception"
 	"github.com/dikyayodihamzah/connex-bot/model/web"
 	"github.com/dikyayodihamzah/connex-bot/service"
 	"github.com/gofiber/fiber/v2"
@@ -29,21 +30,23 @@ func (controller *messageControllerImpl) NewRouter(app fiber.Router) {
 			Message: "ok",
 		})
 	})
+
+	app.Post("/messages", controller.SendMessage)
 }
 
-// func (controller *messageControllerImpl) Broadcast(ctx *fiber.Ctx) error {
-// 	request := new(web.MessageRequest)
-// 	if err := ctx.BodyParser(request); err != nil {
-// 		return exception.ErrorHandler(ctx, err)
-// 	}
+func (controller *messageControllerImpl) SendMessage(ctx *fiber.Ctx) error {
+	request := new(web.TelegramMessageRequest)
+	if err := ctx.BodyParser(request); err != nil {
+		return exception.ErrorHandler(ctx, err)
+	}
 
-// 	if err := controller.MessageService.Broadcast(ctx.Context(), *request); err != nil {
-// 		return exception.ErrorHandler(ctx, err)
-// 	}
+	if err := controller.MessageService.TestSendMessage(ctx.Context(), *request); err != nil {
+		return exception.ErrorHandler(ctx, err)
+	}
 
-// 	return ctx.Status(fiber.StatusOK).JSON(web.WebResponse{
-// 		Code:    fiber.StatusOK,
-// 		Status:  true,
-// 		Message: "Message sent successfully",
-// 	})
-// }
+	return ctx.Status(fiber.StatusOK).JSON(web.WebResponse{
+		Code:    fiber.StatusOK,
+		Status:  true,
+		Message: "Message sent successfully",
+	})
+}
