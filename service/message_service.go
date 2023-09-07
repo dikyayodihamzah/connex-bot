@@ -3,11 +3,12 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/dikyayodihamzah/connex-bot/exception"
-	"github.com/dikyayodihamzah/connex-bot/model/kafkamodel"
+	"github.com/dikyayodihamzah/connex-bot/model/model_kafka"
 	"github.com/dikyayodihamzah/connex-bot/model/web"
 	"github.com/dikyayodihamzah/connex-bot/repository"
 	"github.com/go-playground/validator/v10"
@@ -33,14 +34,7 @@ func NewMessageService(
 	}
 }
 
-func (service *messageServiceImpl) SendMessage(request []byte) error {
-	messageRequest := new(kafkamodel.TelegramMessageRequest)
-
-	if err := json.Unmarshal(request, messageRequest); err != nil {
-		log.Println("Error kafka send message consumer:", err.Error())
-		return err
-	}
-
+func (service *messageServiceImpl) TestSendMessage(c context.Context, messageRequest web.TelegramMessageRequest) error {
 	validate := validator.New()
 	if err := validate.Struct(messageRequest); err != nil {
 		return err
@@ -68,29 +62,32 @@ func (service *messageServiceImpl) SendMessage(request []byte) error {
 	return nil
 }
 
-func (service *messageServiceImpl) TestSendMessage(c context.Context, messageRequest web.TelegramMessageRequest) error {
-	validate := validator.New()
-	if err := validate.Struct(messageRequest); err != nil {
+func (service *messageServiceImpl) SendMessage(request []byte) error {
+	notificationRequest := new(model_kafka.TelegramNotification)
+
+	if err := json.Unmarshal(request, notificationRequest); err != nil {
+		log.Println("Error kafka send message:", err.Error())
 		return err
 	}
 
-	if messageRequest.Message == "" {
+	validate := validator.New()
+	if err := validate.Struct(notificationRequest); err != nil {
+		return err
+	}
+
+	if notificationRequest.Message == "" {
 		return exception.NewError(http.StatusBadRequest, "Message parameter is missing")
 	}
 
-	var userChatIDs []int64
-	for _, username := range messageRequest.Usernames {
-		ctx := context.Background()
-
-		user, _ := service.UserRepository.FindOne(ctx, "telegram_user", username)
-		userChatIDs = append(userChatIDs, user.TelegramChatId)
+	ctx := context.Background()
+	user, err := service.UserRepository.FindOne(ctx, "telegram_user", notificationRequest.TelegramUser)
+	if err != nil {
+		return exception.NewError(http.StatusInternalServerError, fmt.Sprintf("Failed to find user with telegram username %s", notificationRequest.TelegramUser))
 	}
 
-	for _, chatID := range userChatIDs {
-		message := tgbotapi.NewMessage(chatID, messageRequest.Message)
-		if _, err := service.Bot.Send(message); err != nil {
-			return exception.NewError(http.StatusInternalServerError, "Failed to send message")
-		}
+	message := tgbotapi.NewMessage(user.TelegramChatId, notificationRequest.Message)
+	if _, err := service.Bot.Send(message); err != nil {
+		return exception.NewError(http.StatusInternalServerError, "Failed to send message")
 	}
 
 	return nil

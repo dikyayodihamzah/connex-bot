@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/dikyayodihamzah/connex-bot/model/domain"
-	"github.com/dikyayodihamzah/connex-bot/model/kafkamodel"
+	"github.com/dikyayodihamzah/connex-bot/model/model_kafka"
 	"github.com/dikyayodihamzah/connex-bot/repository"
 )
 
@@ -27,7 +27,7 @@ func NewUserConsumerService(userRepo repository.UserRepository) UserConsumerServ
 }
 
 func (service *userConsumerServiceImpl) Create(message []byte) error {
-	userMsg := new(kafkamodel.User)
+	userMsg := new(model_kafka.User)
 
 	if err := json.Unmarshal(message, userMsg); err != nil {
 		log.Println("Error kafka insert user consumer:", err.Error())
@@ -63,7 +63,7 @@ func (service *userConsumerServiceImpl) Create(message []byte) error {
 }
 
 func (service *userConsumerServiceImpl) Update(message []byte) error {
-	userMsg := new(kafkamodel.User)
+	userMsg := new(model_kafka.User)
 
 	if err := json.Unmarshal(message, userMsg); err != nil {
 		log.Println("Error kafka insert user consumer:", err.Error())
@@ -99,7 +99,7 @@ func (service *userConsumerServiceImpl) Update(message []byte) error {
 }
 
 func (service *userConsumerServiceImpl) Delete(message []byte) error {
-	userMsg := new(kafkamodel.User)
+	userMsg := new(model_kafka.User)
 
 	if err := json.Unmarshal(message, userMsg); err != nil {
 		log.Println("Error kafka insert user consumer:", err.Error())

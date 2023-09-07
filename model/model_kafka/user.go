@@ -1,4 +1,4 @@
-package kafkamodel
+package model_kafka
 
 import (
 	"time"
