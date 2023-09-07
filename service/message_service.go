@@ -79,8 +79,7 @@ func (service *messageServiceImpl) SendMessage(request []byte) error {
 		return exception.NewError(http.StatusBadRequest, "Message parameter is missing")
 	}
 
-	ctx := context.Background()
-	user, err := service.UserRepository.FindOne(ctx, "telegram_user", notificationRequest.TelegramUser)
+	user, err := service.UserRepository.FindOne(context.Background(), "telegram_user", notificationRequest.TelegramUser)
 	if err != nil {
 		return exception.NewError(http.StatusInternalServerError, fmt.Sprintf("Failed to find user with telegram username %s", notificationRequest.TelegramUser))
 	}

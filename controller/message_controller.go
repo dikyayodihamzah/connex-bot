@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/dikyayodihamzah/connex-bot/exception"
+	"github.com/dikyayodihamzah/connex-bot/middleware"
 	"github.com/dikyayodihamzah/connex-bot/model/web"
 	"github.com/dikyayodihamzah/connex-bot/service"
 	"github.com/gofiber/fiber/v2"
@@ -31,7 +32,7 @@ func (controller *messageControllerImpl) NewRouter(app fiber.Router) {
 		})
 	})
 
-	app.Post("/messages", controller.SendMessage)
+	app.Post("/messages", middleware.IsAuthenticated, controller.SendMessage)
 }
 
 func (controller *messageControllerImpl) SendMessage(ctx *fiber.Ctx) error {
